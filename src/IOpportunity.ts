@@ -1,8 +1,8 @@
 /* eslint-disable */
 export interface IOpportunity {
     sfaLeadId: string,
-    sfaCustomer: string,
     sfaLeadName: string,
+    sfaCustomer: string,
     sfaRfpDay: string,
     sfaSalerStringId: string,
     sfaBidManagerStringId: string,
@@ -14,6 +14,7 @@ export interface IOpportunity {
     sfaTeamId: string,
     sfaReasonOfLost: string,
     sfaOpportunityPhase: string,
-    sfaTeamDone: boolean | null
+    sfaTeamDone: boolean | null,
+    sfaTechnicalGarantStringId: string,
 }
 /* eslint-enable */

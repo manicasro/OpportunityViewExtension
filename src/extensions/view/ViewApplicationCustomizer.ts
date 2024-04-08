@@ -266,6 +266,60 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
+  private generateItems(data: IOpportunity): HTMLElement {
+    let divElem = document.createElement('div');
+    divElem.className = styles.opportunityItems;
+
+    // Fetch user information for each ID
+    Promise.all([
+      (data.sfaSalerStringId === null || data.sfaSalerStringId == undefined) 
+        ? null 
+        : this.getUserInfo(data.sfaSalerStringId),
+      (data.sfaBidManagerStringId === null || data.sfaBidManagerStringId == undefined) 
+        ? null 
+        : this.getUserInfo(data.sfaBidManagerStringId),
+      (data.sfaGarantStringId === null || data.sfaGarantStringId == undefined) 
+        ? null 
+        : this.getUserInfo(data.sfaGarantStringId),
+      (data.sfaLegalStringId === null || data.sfaLegalStringId == undefined) 
+        ? null 
+        : this.getUserInfo(data.sfaLegalStringId),
+      (data.sfaTechnicalGarantStringId === null || data.sfaTechnicalGarantStringId == undefined) 
+        ? null 
+        : this.getUserInfo(data.sfaTechnicalGarantStringId)
+    ])
+    .then((usersData: any[]) => {
+      const salerName = (usersData[0] === null || usersData[0] == undefined)
+      ? null
+      : usersData[0].Title;
+      const managerName = (usersData[1] === null || usersData[1] == undefined)
+      ? null
+      : usersData[1].Title;
+      const garantName = (usersData[2] === null || usersData[2] == undefined)
+      ? null
+      : usersData[2].Title;
+      const legalName = (usersData[3] === null || usersData[3] == undefined)
+      ? null
+      : usersData[3].Title;
+      const technicalGarantName = (usersData[4] === null || usersData[4] == undefined)
+      ? null
+      : usersData[4].Title;
+      
+      divElem.appendChild(this.generateOpportunityItem('Zadavatel', data.sfaCustomer));
+      divElem.appendChild(this.generateOpportunityItem('Status VZ', data.sfaGoNoGo));
+      divElem.appendChild(this.generateOpportunityItem('RFP Day', data.sfaRfpDay));
+      divElem.appendChild(this.generateOpportunityItem('Obchodník', salerName));
+      divElem.appendChild(this.generateOpportunityItem('Garant nabídky', garantName));
+      divElem.appendChild(this.generateOpportunityItem('BID manažer', managerName));
+      divElem.appendChild(this.generateOpportunityItem('Právní konzultant', legalName));
+      divElem.appendChild(this.generateOpportunityItem('Technický Garant', technicalGarantName));
+      divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
+      divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
+    })
+
+    return divElem;
+  }
+
   private generateTitle(title: string): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityTitleContainer;
@@ -284,59 +338,12 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
-  private generateItems(data: IOpportunity): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityItems;
-
-    // Fetch user information for each ID
-    Promise.all([
-      (data.sfaSalerStringId === null || data.sfaSalerStringId == undefined) 
-       ? null 
-       : this.getUserInfo(data.sfaSalerStringId),
-      (data.sfaBidManagerStringId === null || data.sfaBidManagerStringId == undefined) 
-       ? null 
-       : this.getUserInfo(data.sfaBidManagerStringId),
-      (data.sfaGarantStringId === null || data.sfaGarantStringId == undefined) 
-       ? null 
-       : this.getUserInfo(data.sfaGarantStringId),
-      (data.sfaLegalStringId === null || data.sfaLegalStringId == undefined) 
-       ? null 
-       : this.getUserInfo(data.sfaLegalStringId)
-    ])
-    .then((usersData: any[]) => {
-      const salerName = (usersData[0] === null || usersData[0] == undefined)
-      ? null
-      : usersData[0].Title;
-      const managerName = (usersData[1] === null || usersData[1] == undefined)
-      ? null
-      : usersData[1].Title;
-      const garantName = (usersData[2] === null || usersData[2] == undefined)
-      ? null
-      : usersData[2].Title;
-      const legalName = (usersData[3] === null || usersData[3] == undefined)
-      ? null
-      : usersData[3].Title;
-      
-      divElem.appendChild(this.generateOpportunityItem('Zadavatel', data.sfaCustomer));
-      divElem.appendChild(this.generateOpportunityItem('RFP Day', data.sfaRfpDay));
-      divElem.appendChild(this.generateOpportunityItem('Bid. M', managerName));
-      divElem.appendChild(this.generateOpportunityItem('Garant nabídky', garantName));
-      divElem.appendChild(this.generateOpportunityItem('Legal', legalName));
-      divElem.appendChild(this.generateOpportunityItem('Obchodník', salerName));
-      divElem.appendChild(this.generateOpportunityItem('Go/NoGo', data.sfaGoNoGo));
-      divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
-      divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
-    })
-
-    return divElem;
-  }
-
   private generateContent(data: IOpportunity): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityViewContent;
     
     let titleDiv = this.generateTitle(data.sfaLeadName);
-    let itemsDiv = this.generateItems(data);
+    let itemsDiv = this.generateButtons(data);
 
     divElem.appendChild(titleDiv);
     divElem.appendChild(itemsDiv);
@@ -354,7 +361,7 @@ export default class ViewApplicationCustomizer
     baseDiv.className = styles.baseInjectedDiv
 
     wholeDiv.appendChild(this.generateContent(data));
-    wholeDiv.appendChild(this.generateButtons(data));
+    wholeDiv.appendChild(this.generateItems(data));
 
     baseDiv.appendChild(wholeDiv);
 

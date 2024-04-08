@@ -75,35 +75,6 @@ p {
     color-scheme: light only;
 }
 
-// OPPORTUNITY ITEM
-// Container with the name and value of the opportunity parameter
-.opportunityItemView {
-    display: flex;
-    /* Set flex-direction to row to place items side by side */
-    flex-direction: row;
-    /* Apply space between items */
-    gap: 5px;
-}
-
-
-// Name of the parameter (example: "sfaCustomer")
-.opportunityItemParamName {
-    font-size: small;
-    font-weight: 400;
-    color: black;
-    width: 110px;
-}
-
-// Parameter Value
-.opportunityItemParamValue {
-    font-size: small;
-    font-weight: 700;
-    color: #E1017B;
-    min-width: 0;
-    overflow-wrap: break-word;
-    white-space: pre;
-}
-
 // Opportunity Title with the name and value of the title
 .opportunityTitleContainer {
     display: flex;
@@ -125,19 +96,76 @@ p {
     font-size: x-large;
     font-weight: 700;
     color: black;
+    margin-bottom: 20px
 }
 
-.opportunityViewContent > div {
-    margin-bottom: 20px; /* Add a large gap between the divs */
+.opportunityViewContent {
+    display: flex; /* Use flexbox to align items */
+}
+
+/* Style for the first child div */
+.opportunityViewContent > div:first-child {
+    width: 70%; /* Set width to 75% of the container */
+}
+
+/* Style for the second child div */
+.opportunityViewContent > div:last-child {
+    width: 30%; /* Set width to 25% of the container */
+}
+
+// OPPORTUNITY ITEM
+// Container with the name and value of the opportunity parameter
+.opportunityItemView {
+    display: flex;
+    /* Set flex-direction to row to place items side by side */
+    flex-direction: row;
+}
+
+// Name of the parameter (example: "sfaCustomer")
+.opportunityItemParamName {
+    font-size: small;
+    font-weight: 400;
+    color: black;
+    width: 125px;
+}
+
+// Parameter Value
+.opportunityItemParamValue {
+    font-size: small;
+    font-weight: 700;
+    color: #E1017B;
+    min-width: 0;
+    overflow-wrap: break-word;
+    white-space: nowrap; // Change to nowrap to prevent line breaks
+    overflow: hidden; // Hide overflow content
+    text-overflow: ellipsis; // Show "..." when content overflows
+    max-width: calc(24vw - 31px - 125px); // Set a max-width to 1/4 of the viewport width minus padding
 }
 
 // The container encapsulating all opportunity parameters
 .opportunityItems {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Three columns with equal width */
+    grid-template-columns: repeat(4, 1fr); /* Four columns with equal width */
+    grid-template-areas: 
+        "col1 col2 col3 ."
+        "col4 col5 col6 col7"
+        "col8 col9 col10 .";
     gap: 20px; /* Wide gap between columns */
 }
 
+.opportunityItemView {
+    // Assign each item to a grid area
+    &:nth-child(1) { grid-area: col1; }
+    &:nth-child(2) { grid-area: col2; }
+    &:nth-child(3) { grid-area: col3; }
+    &:nth-child(4) { grid-area: col4; }
+    &:nth-child(5) { grid-area: col5; }
+    &:nth-child(6) { grid-area: col6; }
+    &:nth-child(7) { grid-area: col7; }
+    &:nth-child(8) { grid-area: col8; }
+    &:nth-child(9) { grid-area: col9; }
+    &:nth-child(10) { grid-area: col10; }
+}
 
 // Container for the buttons in the opportunity
 .opportunityButtonContainer {
@@ -174,17 +202,9 @@ p {
 // Div that conatains the content on the left as well as the buttons on the right
 .wholeDiv {
     display: flex;
+    flex-direction: column; // Stack child divs vertically
     margin-top: 32px; /* Add big margin from the top */
     margin-left: 32px; /* Add slight margin from the left */
     margin-right: 32px; /* Add slight margin from the right */
-}
-
-/* Style for the first child div */
-.wholeDiv > div:first-child {
-    width: 70%; /* Set width to 75% of the container */
-}
-
-/* Style for the second child div */
-.wholeDiv > div:last-child {
-    width: 30%; /* Set width to 25% of the container */
+    margin-bottom: 32px; /* Add big margin from the bottom */
 }

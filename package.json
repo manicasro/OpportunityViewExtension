@@ -1,6 +1,6 @@
 {
   "name": "opportunity-extension",
-  "version": "1.0.21",
+  "version": "1.0.25",
   "private": true,
   "engines": {
     "node": ">=16.13.0 <17.0.0 || >=18.17.1 <19.0.0"
