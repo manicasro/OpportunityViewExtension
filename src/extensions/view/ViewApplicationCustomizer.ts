@@ -21,10 +21,10 @@ export default class ViewApplicationCustomizer
   extends BaseApplicationCustomizer<IViewApplicationCustomizerProperties> {
 
   private spHttpClient: SPHttpClient;
-  private config: IConfig = {tenantId: "b213b057-1008-4204-8c53-8147bc602a29",
+  private config: IConfig = {tenantId: "af67006a-f6c8-4865-a51a-a9255a4bccb8",
                              opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
                              leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
-                             siteName: "sites/f-test-zakazky/verejne_zakazky",
+                             siteName: "sites/tmozakazky/verejne_zakazky",
                              keySequence: 'id=/'};
                              
   private previousUrl: string;
@@ -160,7 +160,9 @@ export default class ViewApplicationCustomizer
     return this.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/items?$filter=sfaLeadId eq '${opportunity}'`, SPHttpClient.configurations.v1)
       .then((response: SPHttpClientResponse) => {
         if (response.ok) {
-          return response.json();
+          const msg = response.json();
+          console.log("Json received", msg);
+          return msg;
         } else {
           throw Error("Failed to fetch data");
         }
@@ -266,6 +268,43 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
+  private generateDateItem(parameterName: string, parameterValue: string): HTMLElement {
+    let divElem = document.createElement('div');
+    divElem.className = styles.opportunityDateItemView;
+  
+    let name = document.createElement('p');
+    name.className = styles.opportunityItemParamName;
+    name.innerHTML = parameterName;
+  
+    let val;
+    let confirmButton;
+    if (parameterValue === null || parameterValue === undefined) {
+      let value: HTMLInputElement;
+      value = document.createElement('input');
+      value.type = 'date';
+      value.className = styles.opportunityItemParamValue;
+
+      confirmButton = document.createElement('button');
+      confirmButton.innerHTML = '\u2713';
+      confirmButton.addEventListener('click', () => {
+        let selectedDate = (value as HTMLInputElement).value; // use a type assertion here
+        console.log(selectedDate); // logs the selected date in 'yyyy-mm-dd' format
+      });
+      val = value;
+    } else {
+      let value = document.createElement('p');
+      value.className = styles.opportunityItemParamValue;
+      const date: Date = new Date(parameterValue);  
+      value.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
+      val = value;
+    }
+  
+    divElem.appendChild(name);
+    divElem.appendChild(val);
+    if (confirmButton) divElem.appendChild(confirmButton);
+    return divElem;
+  }
+
   private generateItems(data: IOpportunity): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityItems;
@@ -315,6 +354,9 @@ export default class ViewApplicationCustomizer
       divElem.appendChild(this.generateOpportunityItem('Technický Garant', technicalGarantName));
       divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
       divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
+      
+      divElem.appendChild(this.generateDateItem('Termín vysvětlení', data.sfaExplanationDate));
+      divElem.appendChild(this.generateDateItem('Termín ÚOHS', data.sfaUohsDate));
     })
 
     return divElem;
