@@ -14,7 +14,7 @@ export interface IConfig {
   opportunityUrl: string,
   leadUrl: string,
   siteName: string,
-  keySequence : string
+  keySequence : string[]
 }
 
 export default class ViewApplicationCustomizer
@@ -25,7 +25,7 @@ export default class ViewApplicationCustomizer
                              opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
                              leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
                              siteName: "sites/tmozakazky/verejne_zakazky",
-                             keySequence: 'id=/'};
+                             keySequence: ['id=/', 'RootFolder=/']};
                              
   private previousUrl: string;
   private currentlyOnSiteWithoutInfo : boolean = false;
@@ -142,18 +142,20 @@ export default class ViewApplicationCustomizer
     const decodedUrl = decodeURIComponent(url);
     // Find the index of the part that starts with keySequence
     const keySequence = this.config.keySequence;
-    const idIndex = decodedUrl.indexOf(keySequence);
-    // If the keySequence is not present, remove the injected div
-    if (idIndex === -1) {
-      return null;
+    let idIndex;
+
+    for (let str of keySequence) {
+      idIndex = decodedUrl.indexOf(str);
+      if (idIndex !== -1) {
+        const partsAfterId = decodedUrl.substring(idIndex + str.length).split('/');
+        if (partsAfterId.length < 4) {
+          return null;
+        } else {
+          return partsAfterId[3].split('&')[0];
+        }
+      }
     }
-    // Get the parts after keySequence
-    const partsAfterId = decodedUrl.substring(idIndex + keySequence.length).split('/');
-    if (partsAfterId.length < 4) {
-      return null;
-    } else {
-      return partsAfterId[3].split('&')[0];
-    }
+    return null;
   }
 
   private async fetchData(opportunity: string): Promise<IOpportunity | null> {
@@ -282,7 +284,13 @@ export default class ViewApplicationCustomizer
       let value: HTMLInputElement;
       value = document.createElement('input');
       value.type = 'date';
-      value.className = styles.opportunityItemParamValue;
+      value.className = styles.opportunityDatePicker;
+      value.id = 'datePicker'; // add an id to the input
+
+      let label = document.createElement('label'); // create a new label element
+      label.htmlFor = 'datePicker'; // associate the label with the input using the id
+      label.innerHTML = 'Select a date'; // set the label text
+      label.appendChild(value); // append the input field to the label
 
       confirmButton = document.createElement('button');
       confirmButton.innerHTML = '\u2713';
@@ -355,7 +363,7 @@ export default class ViewApplicationCustomizer
       divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
       divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
       
-      divElem.appendChild(this.generateDateItem('Termín vysvětlení', data.sfaExplanationDate));
+      divElem.appendChild(this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate));
       divElem.appendChild(this.generateDateItem('Termín ÚOHS', data.sfaUohsDate));
     })
 

@@ -148,12 +148,20 @@ p {
     max-width: calc(24vw - 31px - 125px); // Set a max-width to 1/4 of the viewport width minus padding
 }
 
+.opportunityDatePicker {
+    font-size: small;
+    font-weight: 700;
+    background-color: transparent;
+    color: #e1017b;
+    outline-color: #e1017b;
+    border: 2px solid #e1017b;
+    border-radius: 0;
+  }
 
 
 
 
-
-
+  
 
 // The container encapsulating all opportunity parameters
 .opportunityItems {
