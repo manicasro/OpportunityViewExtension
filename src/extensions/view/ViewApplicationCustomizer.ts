@@ -4,6 +4,7 @@ import { BaseApplicationCustomizer } from '@microsoft/sp-application-base';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { IOpportunity } from '../../IOpportunity';
 import styles from './ViewApplicationCustomizer.module.scss';
+import { SPPermission } from '@microsoft/sp-page-context';
 
 export interface IViewApplicationCustomizerProperties {
   testMessage: string;
@@ -21,7 +22,7 @@ export default class ViewApplicationCustomizer
   extends BaseApplicationCustomizer<IViewApplicationCustomizerProperties> {
 
   private spHttpClient: SPHttpClient;
-  private config: IConfig = {tenantId: "af67006a-f6c8-4865-a51a-a9255a4bccb8",
+  private config: IConfig = {tenantId: "b213b057-1008-4204-8c53-8147bc602a29",
                              opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
                              leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
                              siteName: "sites/tmozakazky/verejne_zakazky",
@@ -270,46 +271,73 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
-  private generateDateItem(parameterName: string, parameterValue: string): HTMLElement {
+  private generateDatePicker(itemName: string): HTMLInputElement {
+    let value: HTMLInputElement;
+      value = document.createElement('input');
+      value.type = 'date';
+      value.className = styles.opportunityDatePicker;
+      value.id = `${itemName}-datePicker`; // add an id to the input
+      return value;
+  }
+
+  private generateConfirmButton(datePicker: HTMLInputElement): HTMLButtonElement {
+    let confirmButton = document.createElement('button');
+    confirmButton.className = styles.opportunityConfirmButton;
+    confirmButton.innerHTML = '\u2713';
+    confirmButton.addEventListener('click', () => {
+      let selectedDate = datePicker.value; 
+      console.log(selectedDate); // logs the selected date in 'yyyy-mm-dd' format
+    });
+    return confirmButton;
+  }
+
+  private async userCanEditList(): Promise<boolean> {
+    try {
+      const response = await this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/EffectiveBasePermissions`, SPHttpClient.configurations.v1);
+      const permissions = await response.json();
+      const manageListsPermission: SPPermission = new SPPermission(permissions);
+      return manageListsPermission.hasPermission(SPPermission.manageLists);
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  private async generateDateItem(parameterName: string, parameterValue: string, itemName: string): Promise<HTMLElement> {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityDateItemView;
   
     let name = document.createElement('p');
     name.className = styles.opportunityItemParamName;
     name.innerHTML = parameterName;
+    divElem.appendChild(name);
   
-    let val;
+    let val = document.createElement('p');
+    val.className = styles.opportunityItemParamValue;
     let confirmButton;
     if (parameterValue === null || parameterValue === undefined) {
-      let value: HTMLInputElement;
-      value = document.createElement('input');
-      value.type = 'date';
-      value.className = styles.opportunityDatePicker;
-      value.id = 'datePicker'; // add an id to the input
-
-      let label = document.createElement('label'); // create a new label element
-      label.htmlFor = 'datePicker'; // associate the label with the input using the id
-      label.innerHTML = 'Select a date'; // set the label text
-      label.appendChild(value); // append the input field to the label
-
-      confirmButton = document.createElement('button');
-      confirmButton.innerHTML = '\u2713';
-      confirmButton.addEventListener('click', () => {
-        let selectedDate = (value as HTMLInputElement).value; // use a type assertion here
-        console.log(selectedDate); // logs the selected date in 'yyyy-mm-dd' format
+      this.userCanEditList().then((canEdit) => {
+        if (!canEdit) {
+          val.innerHTML = 'N/A';
+          divElem.appendChild(val);
+          return divElem;
+        }else{
+          let datePicker = this.generateDatePicker(itemName);
+          confirmButton = this.generateConfirmButton(datePicker);
+          let pickerAndButton = document.createElement('div');
+          pickerAndButton.className = styles.opportunityPickerAndButton;
+          pickerAndButton.appendChild(datePicker);
+          pickerAndButton.appendChild(confirmButton);
+          divElem.appendChild(pickerAndButton);
+          return divElem;
+        }
       });
-      val = value;
     } else {
-      let value = document.createElement('p');
-      value.className = styles.opportunityItemParamValue;
       const date: Date = new Date(parameterValue);  
-      value.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
-      val = value;
+      val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
+      divElem.appendChild(val);
+      return divElem;
     }
-  
-    divElem.appendChild(name);
-    divElem.appendChild(val);
-    if (confirmButton) divElem.appendChild(confirmButton);
     return divElem;
   }
 
@@ -333,24 +361,26 @@ export default class ViewApplicationCustomizer
         : this.getUserInfo(data.sfaLegalStringId),
       (data.sfaTechnicalGarantStringId === null || data.sfaTechnicalGarantStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaTechnicalGarantStringId)
+        : this.getUserInfo(data.sfaTechnicalGarantStringId),
+      this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate, 'sfaExplanationDate'),
+      this.generateDateItem('Termín ÚOHS', data.sfaUohsDate, 'sfaUohsDate')
     ])
-    .then((usersData: any[]) => {
-      const salerName = (usersData[0] === null || usersData[0] == undefined)
+    .then((arr: any[]) => {
+      const salerName = (arr[0] === null || arr[0] == undefined)
       ? null
-      : usersData[0].Title;
-      const managerName = (usersData[1] === null || usersData[1] == undefined)
+      : arr[0].Title;
+      const managerName = (arr[1] === null || arr[1] == undefined)
       ? null
-      : usersData[1].Title;
-      const garantName = (usersData[2] === null || usersData[2] == undefined)
+      : arr[1].Title;
+      const garantName = (arr[2] === null || arr[2] == undefined)
       ? null
-      : usersData[2].Title;
-      const legalName = (usersData[3] === null || usersData[3] == undefined)
+      : arr[2].Title;
+      const legalName = (arr[3] === null || arr[3] == undefined)
       ? null
-      : usersData[3].Title;
-      const technicalGarantName = (usersData[4] === null || usersData[4] == undefined)
+      : arr[3].Title;
+      const technicalGarantName = (arr[4] === null || arr[4] == undefined)
       ? null
-      : usersData[4].Title;
+      : arr[4].Title;
       
       divElem.appendChild(this.generateOpportunityItem('Zadavatel', data.sfaCustomer));
       divElem.appendChild(this.generateOpportunityItem('Status VZ', data.sfaGoNoGo));
@@ -363,8 +393,8 @@ export default class ViewApplicationCustomizer
       divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
       divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
       
-      divElem.appendChild(this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate));
-      divElem.appendChild(this.generateDateItem('Termín ÚOHS', data.sfaUohsDate));
+      divElem.appendChild(arr[5]);
+      divElem.appendChild(arr[6]);
     })
 
     return divElem;

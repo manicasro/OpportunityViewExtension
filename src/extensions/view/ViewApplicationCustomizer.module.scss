@@ -125,6 +125,7 @@ p {
     display: flex;
     /* Set flex-direction to row to place items side by side */
     flex-direction: row;
+    align-items: baseline;
 }
 
 // Name of the parameter (example: "sfaCustomer")
@@ -158,10 +159,16 @@ p {
     border-radius: 0;
   }
 
+.opportunityConfirmButton {
+    color: black;
+}
+
+.opportunityPickerAndButton {
+    display: flex;
+    flex-direction: row;
+}
 
 
-
-  
 
 // The container encapsulating all opportunity parameters
 .opportunityItems {
