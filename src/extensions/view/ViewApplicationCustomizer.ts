@@ -5,6 +5,8 @@ import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { IOpportunity } from '../../IOpportunity';
 import styles from './ViewApplicationCustomizer.module.scss';
 import { SPPermission } from '@microsoft/sp-page-context';
+import pnp from "sp-pnp-js";
+
 
 export interface IViewApplicationCustomizerProperties {
   testMessage: string;
@@ -22,7 +24,7 @@ export default class ViewApplicationCustomizer
   extends BaseApplicationCustomizer<IViewApplicationCustomizerProperties> {
 
   private spHttpClient: SPHttpClient;
-  private config: IConfig = {tenantId: "b213b057-1008-4204-8c53-8147bc602a29",
+  private config: IConfig = {tenantId: "af67006a-f6c8-4865-a51a-a9255a4bccb8",
                              opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
                              leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
                              siteName: "sites/tmozakazky/verejne_zakazky",
@@ -35,6 +37,13 @@ export default class ViewApplicationCustomizer
 
   public async onInit(): Promise<void> {
     console.log("Initializing ViewApplicationCustomizer extension.");
+
+    // Setup pnp
+    pnp.setup({
+      sp: {
+        baseUrl: this.context.pageContext.web.absoluteUrl
+      }
+    });
 
     // Obtain SPHttpClient instance from context
     this.spHttpClient = this.context.spHttpClient;
@@ -280,13 +289,27 @@ export default class ViewApplicationCustomizer
       return value;
   }
 
-  private generateConfirmButton(datePicker: HTMLInputElement): HTMLButtonElement {
+  private async updateSfaExplanationDate(Id: number, selectedDate: string, itemName: string): Promise<void> {
+    const formattedDate = `${selectedDate}T00:00:00Z`; // format the date in ISO 8601 format
+    if (itemName === 'sfaExplanationDate') {
+      pnp.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaExplanationDate: formattedDate }).then(() => {
+        this.lastOpportunity = '';
+        this.processOpportunity();});
+    } else {
+      pnp.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaUohsDate: formattedDate }).then(() => {
+        this.lastOpportunity = '';
+        this.processOpportunity();});
+    }
+  }
+
+  private generateConfirmButton(datePicker: HTMLInputElement, id: number, itemName: string): HTMLButtonElement {
     let confirmButton = document.createElement('button');
     confirmButton.className = styles.opportunityConfirmButton;
     confirmButton.innerHTML = '\u2713';
     confirmButton.addEventListener('click', () => {
       let selectedDate = datePicker.value; 
-      console.log(selectedDate); // logs the selected date in 'yyyy-mm-dd' format
+      console.log(`${selectedDate} - ${id}`); // logs the selected date in 'yyyy-mm-dd' format
+      this.updateSfaExplanationDate(id, selectedDate, itemName);
     });
     return confirmButton;
   }
@@ -303,7 +326,7 @@ export default class ViewApplicationCustomizer
     }
   }
 
-  private async generateDateItem(parameterName: string, parameterValue: string, itemName: string): Promise<HTMLElement> {
+  private async generateDateItem(parameterName: string, parameterValue: string, itemName: string, id: number): Promise<HTMLElement> {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityDateItemView;
   
@@ -323,7 +346,7 @@ export default class ViewApplicationCustomizer
           return divElem;
         }else{
           let datePicker = this.generateDatePicker(itemName);
-          confirmButton = this.generateConfirmButton(datePicker);
+          confirmButton = this.generateConfirmButton(datePicker, id, itemName);
           let pickerAndButton = document.createElement('div');
           pickerAndButton.className = styles.opportunityPickerAndButton;
           pickerAndButton.appendChild(datePicker);
@@ -362,8 +385,8 @@ export default class ViewApplicationCustomizer
       (data.sfaTechnicalGarantStringId === null || data.sfaTechnicalGarantStringId == undefined) 
         ? null 
         : this.getUserInfo(data.sfaTechnicalGarantStringId),
-      this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate, 'sfaExplanationDate'),
-      this.generateDateItem('Termín ÚOHS', data.sfaUohsDate, 'sfaUohsDate')
+      this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate, 'sfaExplanationDate', data.Id),
+      this.generateDateItem('Termín ÚOHS', data.sfaUohsDate, 'sfaUohsDate', data.Id)
     ])
     .then((arr: any[]) => {
       const salerName = (arr[0] === null || arr[0] == undefined)

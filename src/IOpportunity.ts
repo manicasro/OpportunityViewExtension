@@ -17,6 +17,7 @@ export interface IOpportunity {
     sfaTeamDone: boolean | null,
     sfaTechnicalGarantStringId: string,
     sfaExplanationDate: string,
-    sfaUohsDate: string
+    sfaUohsDate: string,
+    Id: number,
 }
 /* eslint-enable */
