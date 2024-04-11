@@ -290,6 +290,7 @@ export default class ViewApplicationCustomizer
   }
 
   private async updateSfaExplanationDate(Id: number, selectedDate: string, itemName: string): Promise<void> {
+    if (selectedDate === '' || selectedDate === null || selectedDate === undefined) return;
     const formattedDate = `${selectedDate}T00:00:00Z`; // format the date in ISO 8601 format
     if (itemName === 'sfaExplanationDate') {
       pnp.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaExplanationDate: formattedDate }).then(() => {
