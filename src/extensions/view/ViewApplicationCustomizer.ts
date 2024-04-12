@@ -280,13 +280,21 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
-  private generateDatePicker(itemName: string): HTMLInputElement {
-    let value: HTMLInputElement;
-      value = document.createElement('input');
-      value.type = 'date';
-      value.className = styles.opportunityDatePicker;
-      value.id = `${itemName}-datePicker`; // add an id to the input
-      return value;
+  private generateDatePicker(itemName: string, date: string | null): HTMLInputElement {
+    let datePicker: HTMLInputElement;
+    datePicker = document.createElement('input');
+    datePicker.type = 'date';
+    datePicker.className = styles.opportunityDatePicker;
+    datePicker.id = `${itemName}-datePicker`; // add an id to the input
+    if (date !== '' && date !== null && date !== undefined) {
+      // Split the date string and parse day, month, year
+      let [day, month, year] = date.split('.');
+      // Create a new Date object using year, month, day (month - 1 because months are zero-indexed)
+      let dateObj = new Date(parseInt(year), parseInt(month)-1, parseInt(day)+1);
+      // Convert the date object to ISO string and set as value
+      datePicker.value = dateObj.toISOString().slice(0,10);
+    }
+    return datePicker;
   }
 
   private async updateSfaExplanationDate(Id: number, selectedDate: string, itemName: string): Promise<void> {
@@ -309,17 +317,17 @@ export default class ViewApplicationCustomizer
     confirmButton.innerHTML = '\u2713';
     confirmButton.addEventListener('click', () => {
       let selectedDate = datePicker.value; 
-      console.log(`${selectedDate} - ${id}`); // logs the selected date in 'yyyy-mm-dd' format
+      //console.log(`${selectedDate} - ${id}`); // logs the selected date in 'yyyy-mm-dd' format
       this.updateSfaExplanationDate(id, selectedDate, itemName);
     });
     return confirmButton;
   }
 
-  private generatePickerWithButton(itemName: string, id: number): HTMLElement {
+  private generatePickerWithButton(itemName: string, id: number, date: string): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityPickerAndButton;
 
-    let datePicker = this.generateDatePicker(itemName);
+    let datePicker = this.generateDatePicker(itemName, date);
     let confirmButton = this.generateConfirmButton(datePicker, id, itemName);
 
     divElem.appendChild(datePicker);
@@ -333,13 +341,21 @@ export default class ViewApplicationCustomizer
     editButton.className = styles.opportunityEditButton;
     editButton.innerHTML = "✎";
     editButton.addEventListener('click', () => {
-      console.log("Edit button clicked.");
+      let targetDiv = document.getElementById(`${itemName}-value`);
+      if (!!targetDiv) {
+        //console.log("Button was clicked and the former date we want to edit is: ", targetDiv.innerText);
+        let newDiv = this.generatePickerWithButton(itemName, id, targetDiv.innerText);
+        targetDiv.replaceWith(newDiv);
+      } else {
+        console.log(`Div with id ${itemName}-name not found.`);
+      }
     });
     return editButton;
   }
 
   private generateEditableDateDiv(parameterValue: string, itemName: string, id: number): HTMLElement {
     let divElem = document.createElement('div');
+    divElem.id = `${itemName}-value`;
     divElem.className = styles.opportunityEditableDate;
   
     let val = document.createElement('p');
@@ -382,14 +398,11 @@ export default class ViewApplicationCustomizer
           divElem.appendChild(val);
           return divElem;
         }else{
-          divElem.appendChild(this.generatePickerWithButton(itemName, id))
+          divElem.appendChild(this.generatePickerWithButton(itemName, id, ''));
           return divElem;
         }
       });
     } else {
-      // const date: Date = new Date(parameterValue);  
-      // val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
-      // divElem.appendChild(val);
       divElem.appendChild(this.generateEditableDateDiv(parameterValue, itemName, id));
       return divElem;
     }
