@@ -163,12 +163,29 @@ p {
     color: black;
 }
 
+.opportunityEditButton {
+    color: black;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    align-items: baseline;
+    transform: scaleX(-1);
+}
+
+.opportunityEditButton:hover {
+    cursor: pointer;
+}
+
 .opportunityPickerAndButton {
     display: flex;
     flex-direction: row;
 }
 
-
+.opportunityEditableDate {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+}
 
 // The container encapsulating all opportunity parameters
 .opportunityItems {

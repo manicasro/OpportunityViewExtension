@@ -315,6 +315,43 @@ export default class ViewApplicationCustomizer
     return confirmButton;
   }
 
+  private generatePickerWithButton(itemName: string, id: number): HTMLElement {
+    let divElem = document.createElement('div');
+    divElem.className = styles.opportunityPickerAndButton;
+
+    let datePicker = this.generateDatePicker(itemName);
+    let confirmButton = this.generateConfirmButton(datePicker, id, itemName);
+
+    divElem.appendChild(datePicker);
+    divElem.appendChild(confirmButton);
+
+    return divElem;
+  }
+
+  generateEditButton(itemName: string, id: number): HTMLElement {
+    let editButton = document.createElement('button');
+    editButton.className = styles.opportunityEditButton;
+    editButton.innerHTML = "✎";
+    editButton.addEventListener('click', () => {
+      console.log("Edit button clicked.");
+    });
+    return editButton;
+  }
+
+  private generateEditableDateDiv(parameterValue: string, itemName: string, id: number): HTMLElement {
+    let divElem = document.createElement('div');
+    divElem.className = styles.opportunityEditableDate;
+  
+    let val = document.createElement('p');
+    val.className = styles.opportunityItemParamValue;
+    const date: Date = new Date(parameterValue);  
+    val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
+    divElem.appendChild(val);
+    divElem.appendChild(this.generateEditButton(itemName, id));
+   
+    return divElem;
+  }
+
   private async userCanEditList(): Promise<boolean> {
     try {
       const response = await this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/EffectiveBasePermissions`, SPHttpClient.configurations.v1);
@@ -338,7 +375,6 @@ export default class ViewApplicationCustomizer
   
     let val = document.createElement('p');
     val.className = styles.opportunityItemParamValue;
-    let confirmButton;
     if (parameterValue === null || parameterValue === undefined) {
       this.userCanEditList().then((canEdit) => {
         if (!canEdit) {
@@ -346,20 +382,15 @@ export default class ViewApplicationCustomizer
           divElem.appendChild(val);
           return divElem;
         }else{
-          let datePicker = this.generateDatePicker(itemName);
-          confirmButton = this.generateConfirmButton(datePicker, id, itemName);
-          let pickerAndButton = document.createElement('div');
-          pickerAndButton.className = styles.opportunityPickerAndButton;
-          pickerAndButton.appendChild(datePicker);
-          pickerAndButton.appendChild(confirmButton);
-          divElem.appendChild(pickerAndButton);
+          divElem.appendChild(this.generatePickerWithButton(itemName, id))
           return divElem;
         }
       });
     } else {
-      const date: Date = new Date(parameterValue);  
-      val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
-      divElem.appendChild(val);
+      // const date: Date = new Date(parameterValue);  
+      // val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
+      // divElem.appendChild(val);
+      divElem.appendChild(this.generateEditableDateDiv(parameterValue, itemName, id));
       return divElem;
     }
     return divElem;
