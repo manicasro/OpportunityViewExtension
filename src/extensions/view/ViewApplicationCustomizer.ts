@@ -24,10 +24,10 @@ export default class ViewApplicationCustomizer
   extends BaseApplicationCustomizer<IViewApplicationCustomizerProperties> {
 
   private spHttpClient: SPHttpClient;
-  private config: IConfig = {tenantId: "af67006a-f6c8-4865-a51a-a9255a4bccb8",
+  private config: IConfig = {tenantId: "b213b057-1008-4204-8c53-8147bc602a29",
                              opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
                              leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
-                             siteName: "sites/tmozakazky/verejne_zakazky",
+                             siteName: "sites/f-test-zakazky/verejne_zakazky",
                              keySequence: ['id=/', 'RootFolder=/']};
                              
   private previousUrl: string;
