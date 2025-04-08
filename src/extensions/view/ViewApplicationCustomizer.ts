@@ -11,6 +11,8 @@ import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import { DefaultConfig, IConfig } from '../config/Config';
+import { isOnTargetPage } from '../utils/UrlUtils';
+import { PollingService } from '../PollingService';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -27,6 +29,7 @@ export default class ViewApplicationCustomizer
   private lastOpportunity: string = '';
   private urlPollingIntervalId: number | null = null;
   private sp: SPFI;
+  private pollingService: PollingService = new PollingService();
 
   public async onInit(): Promise<void> {
     console.log("Initializing ViewApplicationCustomizer extension.");
@@ -64,20 +67,28 @@ export default class ViewApplicationCustomizer
 
   private startUrlPolling(): void {
     console.log("Starting URL polling.");
-    this.urlPollingIntervalId = setInterval(() => {
-        const currentUrl = window.location.href;
-        if (currentUrl !== this.previousUrl) {
-          this.previousUrl = currentUrl;
-          this.currentlyOnSiteWithoutInfo = false;
-        }
-        if (currentUrl.toLowerCase().indexOf(this.config.siteName) !== -1) {
-            // If URL has changed and on "Verejne_zakazky" page, rerender the custom div
-            this.processOpportunity();
-        } else { 
-            // If not on "Verejne_zakazky" page, remove the custom div
-            this.removeInjectedExtensionDiv();
-        }      
+  
+    // Use the PollingService to manage the interval
+    this.pollingService.startPolling(() => {
+      this.checkForUrlChange();
     }, 500); // Poll every half second (adjust interval as needed)
+  }
+
+  private checkForUrlChange(): void {
+    const currentUrl = window.location.href;
+  
+    // Check if the URL has changed
+    if (currentUrl !== this.previousUrl) {
+      this.previousUrl = currentUrl;
+      this.currentlyOnSiteWithoutInfo = false;
+    }
+  
+    // Handle URL-specific logic
+    if (isOnTargetPage(currentUrl, this.config.siteName)) {
+      this.processOpportunity();
+    } else {
+      this.removeInjectedExtensionDiv();
+    }
   }
 
   private removeInjectedExtensionDiv(): void {
