@@ -305,7 +305,7 @@ export default class ViewApplicationCustomizer
           divElem.appendChild(val);
           return divElem;
         }else{
-          divElem.appendChild(this.generatePickerWithButton(itemName, id, ''));
+          divElem.appendChild(generatePickerWithButton(itemName, id, '', this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
           return divElem;
         }
       });
