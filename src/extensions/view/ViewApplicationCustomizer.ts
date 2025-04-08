@@ -13,8 +13,6 @@ import "@pnp/sp/items";
 import { DefaultConfig, IConfig } from '../config/Config';
 import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
-import { generateTitle } from '../utils/generators/generateTitle';
-import { generateButtons } from '../utils/generators/generateButtons';
 import { generateContent } from '../utils/generators/generateContent';
 import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
 import { generateDatePicker } from '../utils/generators/generateDatePicker';
