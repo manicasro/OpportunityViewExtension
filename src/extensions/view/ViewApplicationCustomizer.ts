@@ -92,10 +92,13 @@ export default class ViewApplicationCustomizer
   }
 
   private removeInjectedExtensionDiv(): void {
-    let divToRemove = document.getElementById("InjectedExtensionDiv");
-    if (divToRemove && divToRemove.parentNode) {
+    const divToRemove = document.getElementById("InjectedExtensionDiv");
+    if (divToRemove?.parentNode) {
       divToRemove.parentNode.removeChild(divToRemove);
+      console.log("Injected extension div removed.");
     }
+  
+    // Reset the last opportunity to undefined for clarity
     this.lastOpportunity = '';
   }
 
@@ -104,8 +107,7 @@ export default class ViewApplicationCustomizer
     // If opportunity is not found, remove the injected div and return
     if (!opportunity) {
       this.removeInjectedExtensionDiv();
-      this.lastOpportunity = '';
-      return Promise.resolve();
+      return;
     }
 
     // Log if opportunity has changed
@@ -113,10 +115,9 @@ export default class ViewApplicationCustomizer
       console.log(`Opportunity changed - ${opportunity}. Fetching new data.`);
     }
 
-    // Find the injected div
+    // Check if the injected div already exists
     let injectedDiv = document.getElementById("InjectedExtensionDiv");
     
-
     if (!injectedDiv) {
       if (this.currentlyOnSiteWithoutInfo) {
         this.lastOpportunity = opportunity;
@@ -143,17 +144,40 @@ export default class ViewApplicationCustomizer
   }
 
   private renderCustomDiv(data: IOpportunity): void {
-    // Find the target element to eventually insert the custom div
-    const targetElement = document.querySelector('.od-TopBar-item.od-TopBar-commandBar.od-TopBar-commandBar--suiteNavSearch');
+    // Create or update the dynamic content
+    let injectedDiv = document.getElementById("InjectedExtensionDiv");
 
-    if (targetElement) {
-      this.removeInjectedExtensionDiv();
-      targetElement.insertAdjacentElement('afterend', this.generateInjectedDiv(data));
-      console.log("Custom div generated and inserted.");
-    } else {
-      console.error("Target element not found. Cannot insert the custom div.");
-    }
+      // Dynamically adjust the grid structure
+      const mainContainer = document.querySelector('.main_9c0f266f') as HTMLElement;
+      if (mainContainer) {
+          // Update grid-template-areas
+          mainContainer.style.gridTemplateAreas = `
+              "spfxHeader spfxHeader"
+              "commandBar commandBar"
+              "renderAfterCommandBar renderAfterCommandBar"
+              "injectedDiv injectedDiv"
+              "messageBar messageBar"
+              "header pane"
+              "headerBar pane"
+              "contentBar pane"
+              "content pane"
+              "spfxFooter spfxFooter"
+              "debug debug"
+          `;
+
+          // Update grid-template-rows
+          mainContainer.style.gridTemplateRows = `
+              max-content max-content max-content max-content max-content max-content max-content max-content 2fr max-content auto
+          `;
+      }
+      // Remove the existing div if it exists
+      if (injectedDiv) {
+        injectedDiv.parentNode?.removeChild(injectedDiv);
+      }
+      // Insert the new div
+      mainContainer.appendChild(this.generateInjectedDiv(data));
   }
+   
 
   private parseUrl(): string | null {
     // Find URL, parse it and call the correct endpoint with REST API
@@ -178,29 +202,24 @@ export default class ViewApplicationCustomizer
   }
 
   private async fetchData(opportunity: string): Promise<IOpportunity | null> {
-    return this.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/items?$filter=sfaLeadId eq '${opportunity}'`, SPHttpClient.configurations.v1)
-      .then((response: SPHttpClientResponse) => {
-        if (response.ok) {
-          const msg = response.json();
-          console.log("Json received", msg);
-          return msg;
-        } else {
-          throw Error("Failed to fetch data");
-        }
-      })
-      .then((data) => {
-        // If data is found, return it
-        if (data.value && data.value.length > 0) {
-          return data.value[0] as IOpportunity;
-        }
-        // If no data is found, return null
+    try {
+      const url = `${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/items?$filter=sfaLeadId eq '${opportunity}'`;
+      const response: SPHttpClientResponse = await this.spHttpClient.get(url, SPHttpClient.configurations.v1);
+  
+      if (!response.ok) {
+        console.error(`Failed to fetch data. Status: ${response.status}, StatusText: ${response.statusText}`);
         return null;
-      })
-      .catch((error) => {
-        console.error(error);
-        // In case of an error, return null
-        return null;
-      });
+      }
+  
+      const data = await response.json();
+      console.log("Json received", data);
+  
+      // Return the first item if data is found
+      return data.value && data.value.length > 0 ? (data.value[0] as IOpportunity) : null;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return null;
+    }
   }
 
   // Method to fetch user information by ID
