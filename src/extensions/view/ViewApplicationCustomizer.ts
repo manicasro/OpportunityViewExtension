@@ -15,6 +15,9 @@ import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
 import { generateTitle } from '../utils/generators/generateTitle';
 import { generateButtons } from '../utils/generators/generateButtons';
+import { generateContent } from '../utils/generators/generateContent';
+import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
+import { generateDatePicker } from '../utils/generators/generateDatePicker';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -237,46 +240,6 @@ export default class ViewApplicationCustomizer
       });
   }
 
-  // Method to generate Opportunity items
-  private generateOpportunityItem(parameterName: string, parameterValue: string): HTMLElement {
-    if (parameterValue === null || parameterValue === undefined) {
-      parameterValue = 'N/A';
-    }
-    
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityItemView;
-
-    let parameterNamePar = document.createElement('p');
-    parameterNamePar.className = styles.opportunityItemParamName;
-    parameterNamePar.innerHTML = parameterName;
-
-    let parameterValuePar = document.createElement('p');
-    parameterValuePar.className = styles.opportunityItemParamValue;
-    parameterValuePar.innerHTML = parameterValue;
-
-    divElem.appendChild(parameterNamePar);
-    divElem.appendChild(parameterValuePar);
-
-    return divElem;
-  }
-
-  private generateDatePicker(itemName: string, date: string | null): HTMLInputElement {
-    let datePicker: HTMLInputElement;
-    datePicker = document.createElement('input');
-    datePicker.type = 'date';
-    datePicker.className = styles.opportunityDatePicker;
-    datePicker.id = `${itemName}-datePicker`; // add an id to the input
-    if (date !== '' && date !== null && date !== undefined) {
-      // Split the date string and parse day, month, year
-      let [day, month, year] = date.split('.');
-      // Create a new Date object using year, month, day (month - 1 because months are zero-indexed)
-      let dateObj = new Date(parseInt(year), parseInt(month)-1, parseInt(day)+1);
-      // Convert the date object to ISO string and set as value
-      datePicker.value = dateObj.toISOString().slice(0,10);
-    }
-    return datePicker;
-  }
-
   private async updateSfaExplanationDate(Id: number, selectedDate: string, itemName: string): Promise<void> {
     if (selectedDate === '' || selectedDate === null || selectedDate === undefined) return;
     const formattedDate = `${selectedDate}T00:00:00Z`; // format the date in ISO 8601 format
@@ -307,7 +270,7 @@ export default class ViewApplicationCustomizer
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityPickerAndButton;
 
-    let datePicker = this.generateDatePicker(itemName, date);
+    let datePicker = generateDatePicker(itemName, date);
     let confirmButton = this.generateConfirmButton(datePicker, id, itemName);
 
     divElem.appendChild(datePicker);
@@ -430,33 +393,20 @@ export default class ViewApplicationCustomizer
       ? null
       : arr[4].Title;
       
-      divElem.appendChild(this.generateOpportunityItem('Zadavatel', data.sfaCustomer));
-      divElem.appendChild(this.generateOpportunityItem('Status VZ', data.sfaGoNoGo));
-      divElem.appendChild(this.generateOpportunityItem('RFP Day', data.sfaRfpDay));
-      divElem.appendChild(this.generateOpportunityItem('Obchodník', salerName));
-      divElem.appendChild(this.generateOpportunityItem('Garant nabídky', garantName));
-      divElem.appendChild(this.generateOpportunityItem('BID manažer', managerName));
-      divElem.appendChild(this.generateOpportunityItem('Právní konzultant', legalName));
-      divElem.appendChild(this.generateOpportunityItem('Technický Garant', technicalGarantName));
-      divElem.appendChild(this.generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
-      divElem.appendChild(this.generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
+      divElem.appendChild(generateOpportunityItem('Zadavatel', data.sfaCustomer));
+      divElem.appendChild(generateOpportunityItem('Status VZ', data.sfaGoNoGo));
+      divElem.appendChild(generateOpportunityItem('RFP Day', data.sfaRfpDay));
+      divElem.appendChild(generateOpportunityItem('Obchodník', salerName));
+      divElem.appendChild(generateOpportunityItem('Garant nabídky', garantName));
+      divElem.appendChild(generateOpportunityItem('BID manažer', managerName));
+      divElem.appendChild(generateOpportunityItem('Právní konzultant', legalName));
+      divElem.appendChild(generateOpportunityItem('Technický Garant', technicalGarantName));
+      divElem.appendChild(generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
+      divElem.appendChild(generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
       
       divElem.appendChild(arr[5]);
       divElem.appendChild(arr[6]);
     })
-
-    return divElem;
-  }
-
-  private generateContent(data: IOpportunity): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityViewContent;
-    
-    let titleDiv = generateTitle(data.sfaLeadName);
-    let itemsDiv = generateButtons(data, this.config);
-
-    divElem.appendChild(titleDiv);
-    divElem.appendChild(itemsDiv);
 
     return divElem;
   }
@@ -470,7 +420,7 @@ export default class ViewApplicationCustomizer
     baseDiv.setAttribute("id", "InjectedExtensionDiv");
     baseDiv.className = styles.baseInjectedDiv
 
-    wholeDiv.appendChild(this.generateContent(data));
+    wholeDiv.appendChild(generateContent(data, this.config));
     wholeDiv.appendChild(this.generateItems(data));
 
     baseDiv.appendChild(wholeDiv);
