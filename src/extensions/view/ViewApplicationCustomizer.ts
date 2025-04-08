@@ -17,6 +17,7 @@ import { generateContent } from '../utils/generators/generateContent';
 import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
 import { generateDatePicker } from '../utils/generators/generateDatePicker';
 import { generateConfirmButton } from '../utils/generators/generateConfirmButton';
+import { generatePickerWithButton } from '../utils/generators/generatePickerWithButtons';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -243,19 +244,6 @@ export default class ViewApplicationCustomizer
       });
   }
 
-  private generatePickerWithButton(itemName: string, id: number, date: string): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityPickerAndButton;
-
-    let datePicker = generateDatePicker(itemName, date);
-    let confirmButton = generateConfirmButton(datePicker, id, itemName, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this));
-
-    divElem.appendChild(datePicker);
-    divElem.appendChild(confirmButton);
-
-    return divElem;
-  }
-
   generateEditButton(itemName: string, id: number): HTMLElement {
     let editButton = document.createElement('button');
     editButton.className = styles.opportunityEditButton;
@@ -263,8 +251,7 @@ export default class ViewApplicationCustomizer
     editButton.addEventListener('click', () => {
       let targetDiv = document.getElementById(`${itemName}-value`);
       if (!!targetDiv) {
-        //console.log("Button was clicked and the former date we want to edit is: ", targetDiv.innerText);
-        let newDiv = this.generatePickerWithButton(itemName, id, targetDiv.innerText);
+        let newDiv = generatePickerWithButton(itemName, id, targetDiv.innerText, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this));
         targetDiv.replaceWith(newDiv);
       } else {
         console.log(`Div with id ${itemName}-name not found.`);
