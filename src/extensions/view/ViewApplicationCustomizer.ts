@@ -13,6 +13,7 @@ import "@pnp/sp/items";
 import { DefaultConfig, IConfig } from '../config/Config';
 import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
+import { generateTitle } from '../utils/generators/generateTitle';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -496,29 +497,11 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
-  private generateTitle(title: string): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityTitleContainer;
-
-    let titleParam = document.createElement('p');
-    titleParam.className = styles.opportunityTitleParam;
-    titleParam.innerHTML = 'Název zakázky';
-
-    let titleValue = document.createElement('p');
-    titleValue.className = styles.opportunityTitleValue;
-    titleValue.innerHTML = title;
-
-    divElem.appendChild(titleParam);
-    divElem.appendChild(titleValue);
-
-    return divElem;
-  }
-
   private generateContent(data: IOpportunity): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityViewContent;
     
-    let titleDiv = this.generateTitle(data.sfaLeadName);
+    let titleDiv = generateTitle(data.sfaLeadName);
     let itemsDiv = this.generateButtons(data);
 
     divElem.appendChild(titleDiv);
