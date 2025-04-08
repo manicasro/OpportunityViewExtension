@@ -5,45 +5,46 @@ import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { IOpportunity } from '../../IOpportunity';
 import styles from './ViewApplicationCustomizer.module.scss';
 import { SPPermission } from '@microsoft/sp-page-context';
-import pnp from "sp-pnp-js";
+import { spfi, SPFI } from "@pnp/sp";
+import { SPFx } from "@pnp/sp/behaviors/spfx";
+import "@pnp/sp/webs";
+import "@pnp/sp/lists";
+import "@pnp/sp/items";
+import { DefaultConfig, IConfig } from '../config/Config';
 
 
 export interface IViewApplicationCustomizerProperties {
   testMessage: string;
 }
 
-export interface IConfig {
-  tenantId: string,
-  opportunityUrl: string,
-  leadUrl: string,
-  siteName: string,
-  keySequence : string[]
-}
-
 export default class ViewApplicationCustomizer
   extends BaseApplicationCustomizer<IViewApplicationCustomizerProperties> {
 
   private spHttpClient: SPHttpClient;
-  private config: IConfig = {tenantId: "b213b057-1008-4204-8c53-8147bc602a29",
-                             opportunityUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Opportunity&c__externalId=", 
-                             leadUrl: "https://tmobileczsk--situat.sandbox.lightning.force.com/lightning/cmp/coredt__NavigateTo?c__objectName=Lead&c__externalId=",
-                             siteName: "sites/f-test-zakazky/verejne_zakazky",
-                             keySequence: ['id=/', 'RootFolder=/']};
-                             
+  private config: IConfig = DefaultConfig;       
   private previousUrl: string;
   private currentlyOnSiteWithoutInfo : boolean = false;
   private lastOpportunity: string = '';
   private urlPollingIntervalId: number | null = null;
+  private sp: SPFI;
 
   public async onInit(): Promise<void> {
     console.log("Initializing ViewApplicationCustomizer extension.");
 
-    // Setup pnp
-    pnp.setup({
-      sp: {
-        baseUrl: this.context.pageContext.web.absoluteUrl
-      }
-    });
+    // Initialize services (PnP, SPHttpClient, etc.)
+    this.initializeServices();
+
+    // Start polling for URL changes
+    this.startUrlPolling();
+
+    return Promise.resolve();
+  }
+
+  private initializeServices(): void {
+    console.log("Initializing services...");
+
+    // Initialize PnP JS
+    this.sp = spfi().using(SPFx(this.context));
 
     // Obtain SPHttpClient instance from context
     this.spHttpClient = this.context.spHttpClient;
@@ -51,10 +52,7 @@ export default class ViewApplicationCustomizer
     // Save the initial URL
     this.previousUrl = window.location.href;
 
-    // Start polling for URL changes
-    this.startUrlPolling();
-
-    return Promise.resolve();
+    console.log("Services initialized.");
   }
 
   protected onDispose(): void {
@@ -301,11 +299,11 @@ export default class ViewApplicationCustomizer
     if (selectedDate === '' || selectedDate === null || selectedDate === undefined) return;
     const formattedDate = `${selectedDate}T00:00:00Z`; // format the date in ISO 8601 format
     if (itemName === 'sfaExplanationDate') {
-      pnp.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaExplanationDate: formattedDate }).then(() => {
+      this.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaExplanationDate: formattedDate }).then(() => {
         this.lastOpportunity = '';
         this.processOpportunity();});
     } else {
-      pnp.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaUohsDate: formattedDate }).then(() => {
+      this.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaUohsDate: formattedDate }).then(() => {
         this.lastOpportunity = '';
         this.processOpportunity();});
     }
