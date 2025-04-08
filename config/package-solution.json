@@ -3,7 +3,7 @@
   "solution": {
     "name": "opportunity-extension-client-side-solution",
     "id": "810c5a30-9d6a-4904-840f-15393eda7f1a",
-    "version": "1.0.29.0",
+    "version": "1.0.38.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -30,7 +30,7 @@
         "title": "Application Extension - Deployment of custom action",
         "description": "Deploys a custom action with ClientSideComponentId association",
         "id": "4f259e61-47c8-4fac-9700-8c7141dd95e5",
-        "version": "1.0.29.0",
+        "version": "1.0.38.0",
         "assets": {
           "elementManifests": [
             "elements.xml",
