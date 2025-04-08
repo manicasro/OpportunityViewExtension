@@ -18,6 +18,7 @@ import { generateButtons } from '../utils/generators/generateButtons';
 import { generateContent } from '../utils/generators/generateContent';
 import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
 import { generateDatePicker } from '../utils/generators/generateDatePicker';
+import { generateConfirmButton } from '../utils/generators/generateConfirmButton';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -227,6 +228,10 @@ export default class ViewApplicationCustomizer
     }
   }
 
+  private resetLastOpportunity(): void {
+    this.lastOpportunity = '';
+  }
+
   // Method to fetch user information by ID
   private getUserInfo(userId: string): Promise<any> {
     return this.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/getuserbyid(${userId})`, SPHttpClient.configurations.v1)
@@ -240,38 +245,12 @@ export default class ViewApplicationCustomizer
       });
   }
 
-  private async updateSfaExplanationDate(Id: number, selectedDate: string, itemName: string): Promise<void> {
-    if (selectedDate === '' || selectedDate === null || selectedDate === undefined) return;
-    const formattedDate = `${selectedDate}T00:00:00Z`; // format the date in ISO 8601 format
-    if (itemName === 'sfaExplanationDate') {
-      this.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaExplanationDate: formattedDate }).then(() => {
-        this.lastOpportunity = '';
-        this.processOpportunity();});
-    } else {
-      this.sp.web.lists.getByTitle('oneSfaRecordsList').items.getById(Id).update({ sfaUohsDate: formattedDate }).then(() => {
-        this.lastOpportunity = '';
-        this.processOpportunity();});
-    }
-  }
-
-  private generateConfirmButton(datePicker: HTMLInputElement, id: number, itemName: string): HTMLButtonElement {
-    let confirmButton = document.createElement('button');
-    confirmButton.className = styles.opportunityConfirmButton;
-    confirmButton.innerHTML = '\u2713';
-    confirmButton.addEventListener('click', () => {
-      let selectedDate = datePicker.value; 
-      //console.log(`${selectedDate} - ${id}`); // logs the selected date in 'yyyy-mm-dd' format
-      this.updateSfaExplanationDate(id, selectedDate, itemName);
-    });
-    return confirmButton;
-  }
-
   private generatePickerWithButton(itemName: string, id: number, date: string): HTMLElement {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityPickerAndButton;
 
     let datePicker = generateDatePicker(itemName, date);
-    let confirmButton = this.generateConfirmButton(datePicker, id, itemName);
+    let confirmButton = generateConfirmButton(datePicker, id, itemName, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this));
 
     divElem.appendChild(datePicker);
     divElem.appendChild(confirmButton);
