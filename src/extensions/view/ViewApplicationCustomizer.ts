@@ -14,6 +14,7 @@ import { DefaultConfig, IConfig } from '../config/Config';
 import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
 import { generateTitle } from '../utils/generators/generateTitle';
+import { generateButtons } from '../utils/generators/generateButtons';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -259,56 +260,6 @@ export default class ViewApplicationCustomizer
     return divElem;
   }
 
-  private generateButtons(data: IOpportunity): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityButtonContainer;
-
-
-    let teamsButton : HTMLButtonElement | null = document.createElement('button');
-
-    if ((data.sfaTeamId !== null && data.sfaTeamId !== undefined) &&
-        (data.sfaGenChannel !== null && data.sfaGenChannel !== undefined) &&
-        (this.config.tenantId !== null && this.config.tenantId !== undefined) &&
-        !!data.sfaTeamDone) {
-      teamsButton.className = styles.opportunityLinkButton;
-      teamsButton.innerHTML = 'Teams';
-      teamsButton.addEventListener('click', () => {
-        const sfaGenChannel = data.sfaGenChannel;
-        const sfaTeamId = data.sfaTeamId;
-        const teamsUrl = `https://teams.microsoft.com/l/channel/${sfaGenChannel}/General?groupId=${sfaTeamId}&tenantId=${this.config.tenantId}`;
-        window.open(teamsUrl, '_blank');
-      });
-    }else{
-      teamsButton = null;
-    }
-
-    let salesForceButton: HTMLButtonElement | null = document.createElement('button');
-    let salesForceUrl: string;
-    if (data.sfaOpportunityId !== null && data.sfaOpportunityId !== undefined &&
-        this.config.opportunityUrl !== null && this.config.opportunityUrl !== undefined) {
-      salesForceUrl = `${this.config.opportunityUrl}${data.sfaOpportunityId}`;
-    }else if (data.sfaLeadId !== null && data.sfaLeadId !== undefined &&
-              this.config.leadUrl !== null && this.config.leadUrl !== undefined) {
-      salesForceUrl = `${this.config.leadUrl}${data.sfaLeadId}`;
-    }else{
-      salesForceButton = null;
-    }
-
-    if (teamsButton !== null) {
-      divElem.appendChild(teamsButton);
-    }
-    if (salesForceButton !== null) {
-      salesForceButton.className = styles.opportunityLinkButton;
-      salesForceButton.innerHTML = 'SalesForce';
-      salesForceButton.addEventListener('click', () => {
-        window.open(salesForceUrl, '_blank');
-      });
-      divElem.appendChild(salesForceButton);
-    }
-    
-    return divElem;
-  }
-
   private generateDatePicker(itemName: string, date: string | null): HTMLInputElement {
     let datePicker: HTMLInputElement;
     datePicker = document.createElement('input');
@@ -502,7 +453,7 @@ export default class ViewApplicationCustomizer
     divElem.className = styles.opportunityViewContent;
     
     let titleDiv = generateTitle(data.sfaLeadName);
-    let itemsDiv = this.generateButtons(data);
+    let itemsDiv = generateButtons(data, this.config);
 
     divElem.appendChild(titleDiv);
     divElem.appendChild(itemsDiv);
