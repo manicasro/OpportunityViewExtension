@@ -171,14 +171,16 @@ export default class ViewApplicationCustomizer
               max-content max-content max-content max-content max-content max-content max-content max-content 2fr max-content auto
           `;
       }
-      // Remove the existing div if it exists
-      if (injectedDiv) {
-        injectedDiv.parentNode?.removeChild(injectedDiv);
-      }
       
-      // Await the new injected div
+      // Generate the new injected div
       const newInjectedDiv = await this.generateInjectedDiv(data);
-      mainContainer.appendChild(newInjectedDiv);
+
+      // Replace the existing div if it exists, otherwise append the new one
+      if (injectedDiv) {
+          injectedDiv.replaceWith(newInjectedDiv);
+      } else {
+          mainContainer.appendChild(newInjectedDiv);
+      }
   }
    
 
