@@ -1,6 +1,6 @@
 {
   "name": "opportunity-extension",
-  "version": "1.0.4",
+  "version": "1.0.45",
   "private": true,
   "engines": {
     "node": ">=16.13.0 <17.0.0 || >=18.17.1 <19.0.0"
@@ -16,6 +16,10 @@
     "@microsoft/sp-application-base": "1.18.2",
     "@microsoft/sp-core-library": "1.18.2",
     "@microsoft/sp-dialog": "1.18.2",
+    "@pnp/common": "^2.15.0",
+    "@pnp/logging": "^4.11.0",
+    "@pnp/odata": "^2.15.0",
+    "@pnp/sp": "^4.11.0",
     "tslib": "2.3.1"
   },
   "devDependencies": {

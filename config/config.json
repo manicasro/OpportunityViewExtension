@@ -11,8 +11,5 @@
       ]
     }
   },
-  "externals": {},
-  "localizedResources": {
-    "ViewApplicationCustomizerStrings": "lib/extensions/view/loc/{locale}.js"
-  }
+  "externals": {}
 }
