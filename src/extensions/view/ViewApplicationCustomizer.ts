@@ -13,11 +13,7 @@ import { DefaultConfig, IConfig } from '../config/Config';
 import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
 import { generateContent } from '../utils/generators/generateContent';
-import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
-import { generatePickerWithButton } from '../utils/generators/generatePickerWithButtons';
-import { getUserInfo } from '../utils/apiCalls/getUserInfo';
-import { generateEditableDateDiv } from '../utils/generators/generateEditableDiv';
-import { userCanEditList } from '../utils/apiCalls/userCanEditList';
+import { generateItems } from '../utils/generators/generateItems';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -148,7 +144,7 @@ export default class ViewApplicationCustomizer
     return Promise.resolve();
   }
 
-  private renderCustomDiv(data: IOpportunity): void {
+  private async renderCustomDiv(data: IOpportunity): Promise<void> {
     // Create or update the dynamic content
     let injectedDiv = document.getElementById("InjectedExtensionDiv");
 
@@ -179,8 +175,10 @@ export default class ViewApplicationCustomizer
       if (injectedDiv) {
         injectedDiv.parentNode?.removeChild(injectedDiv);
       }
-      // Insert the new div
-      mainContainer.appendChild(this.generateInjectedDiv(data));
+      
+      // Await the new injected div
+      const newInjectedDiv = await this.generateInjectedDiv(data);
+      mainContainer.appendChild(newInjectedDiv);
   }
    
 
@@ -231,106 +229,27 @@ export default class ViewApplicationCustomizer
     this.lastOpportunity = '';
   }
 
-  private async generateDateItem(parameterName: string, parameterValue: string, itemName: string, id: number): Promise<HTMLElement> {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityDateItemView;
-  
-    let name = document.createElement('p');
-    name.className = styles.opportunityItemParamName;
-    name.innerHTML = parameterName;
-    divElem.appendChild(name);
-  
-    let val = document.createElement('p');
-    val.className = styles.opportunityItemParamValue;
-    if (parameterValue === null || parameterValue === undefined) {
-      userCanEditList(this.spHttpClient, this.context).then((canEdit) => {
-        if (!canEdit) {
-          val.innerHTML = 'N/A';
-          divElem.appendChild(val);
-          return divElem;
-        }else{
-          divElem.appendChild(generatePickerWithButton(itemName, id, '', this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
-          return divElem;
-        }
-      });
-    } else {
-      divElem.appendChild(generateEditableDateDiv(parameterValue, itemName, id, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
-      return divElem;
-    }
-    return divElem;
-  }
-
-  private generateItems(data: IOpportunity): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.className = styles.opportunityItems;
-
-    // Fetch user information for each ID
-    Promise.all([
-      (data.sfaSalerStringId === null || data.sfaSalerStringId == undefined) 
-        ? null 
-        : getUserInfo(data.sfaSalerStringId, this.spHttpClient, this.context),
-      (data.sfaBidManagerStringId === null || data.sfaBidManagerStringId == undefined) 
-        ? null 
-        : getUserInfo(data.sfaBidManagerStringId, this.spHttpClient, this.context),
-      (data.sfaGarantStringId === null || data.sfaGarantStringId == undefined) 
-        ? null 
-        : getUserInfo(data.sfaGarantStringId, this.spHttpClient, this.context),
-      (data.sfaLegalStringId === null || data.sfaLegalStringId == undefined) 
-        ? null 
-        : getUserInfo(data.sfaLegalStringId, this.spHttpClient, this.context),
-      (data.sfaTechnicalGarantStringId === null || data.sfaTechnicalGarantStringId == undefined) 
-        ? null 
-        : getUserInfo(data.sfaTechnicalGarantStringId, this.spHttpClient, this.context),
-      this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate, 'sfaExplanationDate', data.Id),
-      this.generateDateItem('Termín ÚOHS', data.sfaUohsDate, 'sfaUohsDate', data.Id)
-    ])
-    .then((arr: any[]) => {
-      const salerName = (arr[0] === null || arr[0] == undefined)
-      ? null
-      : arr[0].Title;
-      const managerName = (arr[1] === null || arr[1] == undefined)
-      ? null
-      : arr[1].Title;
-      const garantName = (arr[2] === null || arr[2] == undefined)
-      ? null
-      : arr[2].Title;
-      const legalName = (arr[3] === null || arr[3] == undefined)
-      ? null
-      : arr[3].Title;
-      const technicalGarantName = (arr[4] === null || arr[4] == undefined)
-      ? null
-      : arr[4].Title;
-      
-      divElem.appendChild(generateOpportunityItem('Zadavatel', data.sfaCustomer));
-      divElem.appendChild(generateOpportunityItem('Status VZ', data.sfaGoNoGo));
-      divElem.appendChild(generateOpportunityItem('RFP Day', data.sfaRfpDay));
-      divElem.appendChild(generateOpportunityItem('Obchodník', salerName));
-      divElem.appendChild(generateOpportunityItem('Garant nabídky', garantName));
-      divElem.appendChild(generateOpportunityItem('BID manažer', managerName));
-      divElem.appendChild(generateOpportunityItem('Právní konzultant', legalName));
-      divElem.appendChild(generateOpportunityItem('Technický Garant', technicalGarantName));
-      divElem.appendChild(generateOpportunityItem('Fáze příležitosti', data.sfaOpportunityPhase));
-      divElem.appendChild(generateOpportunityItem('Důvod prohry', data.sfaReasonOfLost));
-      
-      divElem.appendChild(arr[5]);
-      divElem.appendChild(arr[6]);
-    })
-
-    return divElem;
-  }
-
-  private generateInjectedDiv(data: IOpportunity): HTMLElement {
+  private async generateInjectedDiv(data: IOpportunity): Promise<HTMLElement> {
     const wholeDiv = document.createElement("div");
     wholeDiv.className = styles.wholeDiv;
 
     const baseDiv = document.createElement("div");
-
     baseDiv.setAttribute("id", "InjectedExtensionDiv");
     baseDiv.className = styles.baseInjectedDiv
 
     wholeDiv.appendChild(generateContent(data, this.config));
-    wholeDiv.appendChild(this.generateItems(data));
 
+    // Await the result of generateItems
+    const itemsDiv = await generateItems(
+        data,
+        this.spHttpClient,
+        this.context,
+        this.resetLastOpportunity.bind(this),
+        this.sp,
+        this.processOpportunity.bind(this)
+    );
+    wholeDiv.appendChild(itemsDiv);
+    
     baseDiv.appendChild(wholeDiv);
 
     return baseDiv;
