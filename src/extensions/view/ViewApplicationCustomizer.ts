@@ -4,7 +4,6 @@ import { BaseApplicationCustomizer } from '@microsoft/sp-application-base';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { IOpportunity } from '../../IOpportunity';
 import styles from './ViewApplicationCustomizer.module.scss';
-import { SPPermission } from '@microsoft/sp-page-context';
 import { spfi, SPFI } from "@pnp/sp";
 import { SPFx } from "@pnp/sp/behaviors/spfx";
 import "@pnp/sp/webs";
@@ -17,7 +16,8 @@ import { generateContent } from '../utils/generators/generateContent';
 import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
 import { generatePickerWithButton } from '../utils/generators/generatePickerWithButtons';
 import { getUserInfo } from '../utils/apiCalls/getUserInfo';
-import { generateEditButton } from '../utils/generators/generateEditButton';
+import { generateEditableDateDiv } from '../utils/generators/generateEditableDiv';
+import { userCanEditList } from '../utils/apiCalls/userCanEditList';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -231,35 +231,6 @@ export default class ViewApplicationCustomizer
     this.lastOpportunity = '';
   }
 
-
-
-  private generateEditableDateDiv(parameterValue: string, itemName: string, id: number): HTMLElement {
-    let divElem = document.createElement('div');
-    divElem.id = `${itemName}-value`;
-    divElem.className = styles.opportunityEditableDate;
-  
-    let val = document.createElement('p');
-    val.className = styles.opportunityItemParamValue;
-    const date: Date = new Date(parameterValue);  
-    val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
-    divElem.appendChild(val);
-    divElem.appendChild(generateEditButton(itemName, id, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
-   
-    return divElem;
-  }
-
-  private async userCanEditList(): Promise<boolean> {
-    try {
-      const response = await this.context.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('oneSfaRecordsList')/EffectiveBasePermissions`, SPHttpClient.configurations.v1);
-      const permissions = await response.json();
-      const manageListsPermission: SPPermission = new SPPermission(permissions);
-      return manageListsPermission.hasPermission(SPPermission.manageLists);
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  }
-
   private async generateDateItem(parameterName: string, parameterValue: string, itemName: string, id: number): Promise<HTMLElement> {
     let divElem = document.createElement('div');
     divElem.className = styles.opportunityDateItemView;
@@ -272,7 +243,7 @@ export default class ViewApplicationCustomizer
     let val = document.createElement('p');
     val.className = styles.opportunityItemParamValue;
     if (parameterValue === null || parameterValue === undefined) {
-      this.userCanEditList().then((canEdit) => {
+      userCanEditList(this.spHttpClient, this.context).then((canEdit) => {
         if (!canEdit) {
           val.innerHTML = 'N/A';
           divElem.appendChild(val);
@@ -283,7 +254,7 @@ export default class ViewApplicationCustomizer
         }
       });
     } else {
-      divElem.appendChild(this.generateEditableDateDiv(parameterValue, itemName, id));
+      divElem.appendChild(generateEditableDateDiv(parameterValue, itemName, id, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
       return divElem;
     }
     return divElem;
