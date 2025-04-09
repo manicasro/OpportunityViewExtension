@@ -15,10 +15,9 @@ import { isOnTargetPage } from '../utils/UrlUtils';
 import { PollingService } from '../PollingService';
 import { generateContent } from '../utils/generators/generateContent';
 import { generateOpportunityItem } from '../utils/generators/generateOpportunityItem';
-import { generateDatePicker } from '../utils/generators/generateDatePicker';
-import { generateConfirmButton } from '../utils/generators/generateConfirmButton';
 import { generatePickerWithButton } from '../utils/generators/generatePickerWithButtons';
 import { getUserInfo } from '../utils/apiCalls/getUserInfo';
+import { generateEditButton } from '../utils/generators/generateEditButton';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -232,21 +231,7 @@ export default class ViewApplicationCustomizer
     this.lastOpportunity = '';
   }
 
-  generateEditButton(itemName: string, id: number): HTMLElement {
-    let editButton = document.createElement('button');
-    editButton.className = styles.opportunityEditButton;
-    editButton.innerHTML = "✎";
-    editButton.addEventListener('click', () => {
-      let targetDiv = document.getElementById(`${itemName}-value`);
-      if (!!targetDiv) {
-        let newDiv = generatePickerWithButton(itemName, id, targetDiv.innerText, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this));
-        targetDiv.replaceWith(newDiv);
-      } else {
-        console.log(`Div with id ${itemName}-name not found.`);
-      }
-    });
-    return editButton;
-  }
+
 
   private generateEditableDateDiv(parameterValue: string, itemName: string, id: number): HTMLElement {
     let divElem = document.createElement('div');
@@ -258,7 +243,7 @@ export default class ViewApplicationCustomizer
     const date: Date = new Date(parameterValue);  
     val.innerHTML = date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
     divElem.appendChild(val);
-    divElem.appendChild(this.generateEditButton(itemName, id));
+    divElem.appendChild(generateEditButton(itemName, id, this.resetLastOpportunity.bind(this), this.sp, this.processOpportunity.bind(this)));
    
     return divElem;
   }
