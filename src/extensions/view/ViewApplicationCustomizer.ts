@@ -18,6 +18,7 @@ import { generateOpportunityItem } from '../utils/generators/generateOpportunity
 import { generateDatePicker } from '../utils/generators/generateDatePicker';
 import { generateConfirmButton } from '../utils/generators/generateConfirmButton';
 import { generatePickerWithButton } from '../utils/generators/generatePickerWithButtons';
+import { getUserInfo } from '../utils/apiCalls/getUserInfo';
 
 
 export interface IViewApplicationCustomizerProperties {
@@ -231,19 +232,6 @@ export default class ViewApplicationCustomizer
     this.lastOpportunity = '';
   }
 
-  // Method to fetch user information by ID
-  private getUserInfo(userId: string): Promise<any> {
-    return this.spHttpClient.get(`${this.context.pageContext.web.absoluteUrl}/_api/web/getuserbyid(${userId})`, SPHttpClient.configurations.v1)
-      .then((response: SPHttpClientResponse) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          console.error(`Error getting user data: ${response.statusText}`);
-          return Promise.reject(response.statusText);
-        }
-      });
-  }
-
   generateEditButton(itemName: string, id: number): HTMLElement {
     let editButton = document.createElement('button');
     editButton.className = styles.opportunityEditButton;
@@ -324,19 +312,19 @@ export default class ViewApplicationCustomizer
     Promise.all([
       (data.sfaSalerStringId === null || data.sfaSalerStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaSalerStringId),
+        : getUserInfo(data.sfaSalerStringId, this.spHttpClient, this.context),
       (data.sfaBidManagerStringId === null || data.sfaBidManagerStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaBidManagerStringId),
+        : getUserInfo(data.sfaBidManagerStringId, this.spHttpClient, this.context),
       (data.sfaGarantStringId === null || data.sfaGarantStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaGarantStringId),
+        : getUserInfo(data.sfaGarantStringId, this.spHttpClient, this.context),
       (data.sfaLegalStringId === null || data.sfaLegalStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaLegalStringId),
+        : getUserInfo(data.sfaLegalStringId, this.spHttpClient, this.context),
       (data.sfaTechnicalGarantStringId === null || data.sfaTechnicalGarantStringId == undefined) 
         ? null 
-        : this.getUserInfo(data.sfaTechnicalGarantStringId),
+        : getUserInfo(data.sfaTechnicalGarantStringId, this.spHttpClient, this.context),
       this.generateDateItem('Termín Vysvětlení', data.sfaExplanationDate, 'sfaExplanationDate', data.Id),
       this.generateDateItem('Termín ÚOHS', data.sfaUohsDate, 'sfaUohsDate', data.Id)
     ])
