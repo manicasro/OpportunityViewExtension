@@ -149,7 +149,7 @@ export default class ViewApplicationCustomizer
     let injectedDiv = document.getElementById("InjectedExtensionDiv");
 
       // Dynamically adjust the grid structure
-      const mainContainer = document.querySelector('.main_9c0f266f') as HTMLElement;
+      const mainContainer = document.querySelector('[data-automationid="main"]') as HTMLElement;
       if (mainContainer) {
           // Update grid-template-areas
           mainContainer.style.gridTemplateAreas = `
