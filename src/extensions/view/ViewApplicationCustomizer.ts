@@ -148,39 +148,55 @@ export default class ViewApplicationCustomizer
     // Create or update the dynamic content
     let injectedDiv = document.getElementById("InjectedExtensionDiv");
 
-      // Dynamically adjust the grid structure
-      const mainContainer = document.querySelector('[data-automationid="main"]') as HTMLElement;
-      if (mainContainer) {
-          // Update grid-template-areas
-          mainContainer.style.gridTemplateAreas = `
-              "spfxHeader spfxHeader"
-              "commandBar commandBar"
-              "renderAfterCommandBar renderAfterCommandBar"
-              "injectedDiv injectedDiv"
-              "messageBar messageBar"
-              "header pane"
-              "headerBar pane"
-              "contentBar pane"
-              "content pane"
-              "spfxFooter spfxFooter"
-              "debug debug"
-          `;
+    // Try to find the main container using [data-automationid="main"]
+    let mainContainer = document.querySelector('[data-automationid="main"]') as HTMLElement;
 
-          // Update grid-template-rows
-          mainContainer.style.gridTemplateRows = `
-              max-content max-content max-content max-content max-content max-content max-content max-content 2fr max-content auto
-          `;
-      }
-      
-      // Generate the new injected div
-      const newInjectedDiv = await this.generateInjectedDiv(data);
+    // Fallback: If mainContainer is not found, try to find the alternative container
+    if (!mainContainer) {
+        mainContainer = document.querySelector(
+            '.od-scrollable-content.od-scrollablePane-content-ItemsScopeList.od-ItemsScopeList-content-sticky'
+        ) as HTMLElement;
 
-      // Replace the existing div if it exists, otherwise append the new one
-      if (injectedDiv) {
-          injectedDiv.replaceWith(newInjectedDiv);
-      } else {
-          mainContainer.appendChild(newInjectedDiv);
-      }
+        // If neither container is found, exit the function
+        if (!mainContainer) {
+            console.error("No suitable container found for injecting the custom div.");
+            return;
+        }
+
+        // Inject the new div at the first position inside the fallback container
+        const newInjectedDiv = await this.generateInjectedDiv(data);
+        mainContainer.insertBefore(newInjectedDiv, mainContainer.firstChild);
+        return;
+    }
+
+    // If mainContainer is found, dynamically adjust the grid structure
+    mainContainer.style.gridTemplateAreas = `
+        "spfxHeader spfxHeader"
+        "commandBar commandBar"
+        "renderAfterCommandBar renderAfterCommandBar"
+        "injectedDiv injectedDiv"
+        "messageBar messageBar"
+        "header pane"
+        "headerBar pane"
+        "contentBar pane"
+        "content pane"
+        "spfxFooter spfxFooter"
+        "debug debug"
+    `;
+
+    mainContainer.style.gridTemplateRows = `
+        max-content max-content max-content max-content max-content max-content max-content max-content 2fr max-content auto
+    `;
+
+    // Generate the new injected div
+    const newInjectedDiv = await this.generateInjectedDiv(data);
+
+    // Replace the existing div if it exists, otherwise append the new one
+    if (injectedDiv) {
+        injectedDiv.replaceWith(newInjectedDiv);
+    } else {
+        mainContainer.appendChild(newInjectedDiv);
+    }
   }
    
 
